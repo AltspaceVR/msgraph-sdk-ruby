@@ -16,7 +16,7 @@ class MicrosoftGraph
     @service = OData::Service.new(
       api_version: options[:api_version],
       auth_callback: auth_callback,
-      base_url: BASE_URL,
+      base_url: options[:base_url] || BASE_URL,
       metadata_file: options[:cached_metadata_file]
     )
     @association_collections = {}
