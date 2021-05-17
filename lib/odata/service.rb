@@ -168,15 +168,19 @@ module OData
     end
 
     def get_type_for_odata_response(parsed_response)
-      if odata_type_string = parsed_response["@odata.type"]
-        get_type_by_name(type_name_from_odata_type_field(odata_type_string))
-      elsif context = parsed_response["@odata.context"]
-        singular, segments = segments_from_odata_context_field(context)
-        first_entity_type = get_type_by_name("Collection(#{entity_set_by_name(segments.shift).member_type})")
-        entity_type = segments.reduce(first_entity_type) do |last_entity_type, segment|
-          last_entity_type.member_type.navigation_property_by_name(segment).type
+      begin
+        if odata_type_string = parsed_response["@odata.type"]
+          get_type_by_name(type_name_from_odata_type_field(odata_type_string))
+        elsif context = parsed_response["@odata.context"]
+          singular, segments = segments_from_odata_context_field(context)
+          first_entity_type = get_type_by_name("Collection(#{entity_set_by_name(segments.shift).member_type})")
+          entity_type = segments.reduce(first_entity_type) do |last_entity_type, segment|
+            last_entity_type.member_type.navigation_property_by_name(segment).type
+          end
+          singular && entity_type.respond_to?(:member_type) ? entity_type.member_type : entity_type
         end
-        singular && entity_type.respond_to?(:member_type) ? entity_type.member_type : entity_type
+      rescue NoMethodError => e
+        # Beta API gives a "undefined method `type' for nil:NilClass" error
       end
     end
 
